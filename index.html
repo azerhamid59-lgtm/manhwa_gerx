@@ -1716,11 +1716,11 @@ body {
 
                 // استدعاء دالة تسجيل الدخول من المكتبة الجديدة
                 const res = await window.Capacitor.Plugins.SocialLogin.login({
-    provider: 'google',
-    options: {
-        filterByAuthorizedAccounts: false
-    }
-});
+                    provider: 'google',
+                    options: {
+                        filterByAuthorizedAccounts: false
+                    }
+                });
 
                 // استخراج الـ ID Token من النتيجة
                 const idToken = res.result.idToken;
@@ -1742,10 +1742,10 @@ body {
                 showToast("تم تسجيل الدخول بنجاح!", "success");
 
             } catch (err) {
-    console.error("Google Auth Error:", err);
-    // هذا السطر الجديد سيطبع الخطأ الحقيقي باللون الأحمر
-    showToast("الخطأ: " + (err.message || JSON.stringify(err)), "error", 10000); 
-} 
+                console.error("Google Auth Error:", err);
+                // هذا السطر الجديد سيطبع الخطأ الحقيقي باللون الأحمر
+                showToast("الخطأ: " + (err.message || JSON.stringify(err)), "error", 10000); 
+            }
         }
 
         async function handleLogout() {
@@ -3451,6 +3451,82 @@ body {
             container.innerHTML = `<div class="continue-reading-card" onclick="openChapterFromList('${manhwaItem.id}', ${targetCh.num})"><div class="continue-info"><h4>مواصلة القراءة</h4><p>الفصل ${formatChapterNum(targetCh.num)}</p></div><div class="continue-icon-wrap"><i class="fa-solid fa-play"></i></div></div>`;
         }
 
+        // --- دوال التخزين المحلي الجديدة باستخدام Capacitor Filesystem ---
+
+        async function saveImagesToFilesystem(manhwaId, chNum, urls) {
+            if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) return false;
+            const { Filesystem, Directory } = window.Capacitor.Plugins;
+            const path = `manhwa_${manhwaId}/chapter_${chNum}`;
+
+            try {
+                // إنشاء المجلد إذا لم يكن موجوداً
+                try { await Filesystem.mkdir({ path, directory: Directory.Data, recursive: true }); } catch(e) {}
+
+                for (let i = 0; i < urls.length; i++) {
+                    const res = await fetch(urls[i]);
+                    const blob = await res.blob();
+                    // تحويل الصورة إلى Base64
+                    const base64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                        reader.readAsDataURL(blob);
+                    });
+                    
+                    await Filesystem.writeFile({
+                        path: `${path}/page_${i}.jpg`,
+                        data: base64,
+                        directory: Directory.Data
+                    });
+                }
+                return true;
+            } catch (error) {
+                console.error("Error saving images to filesystem:", error);
+                return false;
+            }
+        }
+
+        async function getImagesFromFilesystem(manhwaId, chNum) {
+            if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) return null;
+            const { Filesystem, Directory } = window.Capacitor.Plugins;
+            const path = `manhwa_${manhwaId}/chapter_${chNum}`;
+
+            try {
+                const result = await Filesystem.readdir({ path, directory: Directory.Data });
+                // ترتيب الصور حسب الاسم
+                const files = result.files
+                    .filter(f => f.name.endsWith('.jpg'))
+                    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+                
+                if (files.length === 0) return null;
+                
+                // تحويل مسارات الملفات إلى مسارات يمكن للمتصفح قراءتها
+                return files.map(f => window.Capacitor.convertFileSrc(f.uri));
+            } catch (error) {
+                // إذا لم يوجد المجلد، فهذا يعني أن الفصل غير محمل
+                return null; 
+            }
+        }
+
+        async function deleteImagesFromFilesystem(manhwaId, chNum) {
+            if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) return;
+            const { Filesystem, Directory } = window.Capacitor.Plugins;
+            const path = `manhwa_${manhwaId}/chapter_${chNum}`;
+            try {
+                await Filesystem.rmdir({ path, directory: Directory.Data, recursive: true });
+            } catch (e) {}
+        }
+
+        async function deleteAllImagesForManhwa(manhwaId) {
+            if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) return;
+            const { Filesystem, Directory } = window.Capacitor.Plugins;
+            const path = `manhwa_${manhwaId}`;
+            try {
+                await Filesystem.rmdir({ path, directory: Directory.Data, recursive: true });
+            } catch (e) {}
+        }
+
+        // -----------------------------------------------------------------
+
         async function fetchChapterPages(manhwaId, chNum) {
             if (!db) return [];
             try {
@@ -3504,13 +3580,14 @@ body {
             let pages = [];
             let isLocal = false;
 
-            try {
-                let localCache = JSON.parse(localStorage.getItem('mg_local_chapters_data_' + manhwaId)) || {};
-                if (localCache[chNum] && localCache[chNum].length > 0) {
-                    pages = localCache[chNum];
+            const dlMap = JSON.parse(localStorage.getItem('mg_downloaded_chapters_' + manhwaId)) || {};
+            if (dlMap[chNum] === true) {
+                const localPages = await getImagesFromFilesystem(manhwaId, chNum);
+                if (localPages && localPages.length > 0) {
+                    pages = localPages;
                     isLocal = true;
                 }
-            } catch (e) {}
+            }
 
             if (isLocal) {
                 openPdfReader(manhwa.id, manhwa.title, Number(chNum), pages, chapter.id);
@@ -3548,12 +3625,10 @@ body {
             if (chaps.length === 0) { listInner.innerHTML = '<p class="empty-state-text" style="min-height: 200px;">لا توجد فصول مطابقة.</p>'; return; }
             const readData = getReadChapters()[manhwaItem.id] || [];
             const dlMap = JSON.parse(localStorage.getItem('mg_downloaded_chapters_' + manhwaItem.id)) || {};
-            const localCache = JSON.parse(localStorage.getItem('mg_local_chapters_data_' + manhwaItem.id)) || {};
             listInner.innerHTML = '';
             chaps.forEach(ch => {
                 const isRead = readData.includes(parseFloat(ch.num));
-                const hasValidFiles = localCache[ch.num] && Array.isArray(localCache[ch.num]) && localCache[ch.num].length > 0;
-                const isDownloaded = (dlMap[ch.num] === true) && hasValidFiles;
+                const isDownloaded = dlMap[ch.num] === true;
                 const publishTime = formatRelativeArabicTime(ch.created_at || manhwaItem.created_at);
                 const row = document.createElement('div'); row.className = 'chapter-row-item-new';
                 row.innerHTML = `
@@ -3580,8 +3655,7 @@ body {
             const manhwa = currentManhwaList.find(m => m.id === manhwaId); if (!manhwa) return;
             
             let dlMap = JSON.parse(localStorage.getItem('mg_downloaded_chapters_' + manhwaId)) || {};
-            let localCache = JSON.parse(localStorage.getItem('mg_local_chapters_data_' + manhwaId)) || {};
-            if (dlMap[chNum] && localCache[chNum] && localCache[chNum].length > 0) { showToast(`الفصل ${formatChapterNum(chNum)} منزّل مسبقاً.`, "info"); return; }
+            if (dlMap[chNum] === true) { showToast(`الفصل ${formatChapterNum(chNum)} منزّل مسبقاً.`, "info"); return; }
             
             const btn = document.getElementById(`dlBtn_${manhwaId}_${chNum}`);
             if (btn) { btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`; btn.disabled = true; }
@@ -3591,14 +3665,18 @@ body {
                 if (!pages || pages.length === 0) {
                     throw new Error("الصفحات غير متوفرة");
                 }
-                localCache[chNum] = pages;
-                localStorage.setItem('mg_local_chapters_data_' + manhwaId, JSON.stringify(localCache));
+                
+                const saved = await saveImagesToFilesystem(manhwaId, chNum, pages);
+                if (!saved) {
+                    throw new Error("فشل حفظ الصور في ذاكرة الهاتف.");
+                }
+
                 dlMap[chNum] = true;
                 localStorage.setItem('mg_downloaded_chapters_' + manhwaId, JSON.stringify(dlMap));
+                
                 if (btn) { btn.className = "chapter-action-icon-btn downloaded-ok"; btn.innerHTML = `<i class="fa-solid fa-circle-down"></i>`; btn.disabled = false; }
             } catch (err) {
-                if (err.name === 'QuotaExceededError') showToast('مساحة التخزين ممتلئة.', 'error', 5000);
-                else showToast(err.message || 'فشل التنزيل.', "error");
+                showToast(err.message || 'فشل التنزيل.', "error");
                 if (btn) { btn.innerHTML = `<i class="fa-solid fa-download"></i>`; btn.disabled = false; }
             }
         }
@@ -3607,7 +3685,6 @@ body {
             if (!checkGuestPermission('download')) return;
             const chaps = manhwaItem.chapters || [];
             let dlMap = JSON.parse(localStorage.getItem('mg_downloaded_chapters_' + manhwaItem.id)) || {};
-            let localCache = JSON.parse(localStorage.getItem('mg_local_chapters_data_' + manhwaItem.id)) || {};
             
             const toDownload = chaps.filter(ch => !dlMap[ch.num]);
             
@@ -3626,28 +3703,19 @@ body {
             try {
                 for (let i = 0; i < toDownload.length; i += BATCH) {
                     const batch = toDownload.slice(i, i + BATCH);
-                    const batchPromises = batch.map(ch => fetchChapterPages(manhwaItem.id, ch.num));
-                    const batchPages = await Promise.all(batchPromises);
                     
-                    batchPages.forEach((pages, idx) => {
-                        const ch = batch[idx];
+                    for (const ch of batch) {
+                        const pages = await fetchChapterPages(manhwaItem.id, ch.num);
                         if (pages && pages.length > 0) {
-                            localCache[ch.num] = pages;
-                            dlMap[ch.num] = true;
+                            const saved = await saveImagesToFilesystem(manhwaItem.id, ch.num, pages);
+                            if (saved) dlMap[ch.num] = true;
                         }
-                    });
-                    
-                    completed += batch.length;
-                    const pct = Math.round((completed / toDownload.length) * 100);
-                    bar.style.width = pct + '%'; percent.innerText = pct + '%';
-                    text.innerText = `جاري تجهيز ${completed} من ${toDownload.length}...`;
-                    
-                    try {
-                        localStorage.setItem('mg_local_chapters_data_' + manhwaItem.id, JSON.stringify(localCache));
+                        completed++;
+                        const pct = Math.round((completed / toDownload.length) * 100);
+                        bar.style.width = pct + '%'; percent.innerText = pct + '%';
+                        text.innerText = `جاري تجهيز ${completed} من ${toDownload.length}...`;
+                        
                         localStorage.setItem('mg_downloaded_chapters_' + manhwaItem.id, JSON.stringify(dlMap));
-                    } catch (e) {
-                        if (e.name === 'QuotaExceededError') throw new Error('مساحة التخزين ممتلئة.');
-                        throw e;
                     }
                     await new Promise(r => setTimeout(r, 15));
                 }
@@ -3666,10 +3734,11 @@ body {
             const count = Object.keys(dlMap).filter(k => dlMap[k] === true).length;
             if (count === 0) { showToast('لا توجد فصول محفوظة.', 'info'); return; }
             
-            showConfirmationSheet('إدارة التنزيلات', `هل تريد حذف ${count} فصل محفوظ؟`, 'حذف الكل', () => {
+            showConfirmationSheet('إدارة التنزيلات', `هل تريد حذف ${count} فصل محفوظ؟`, 'حذف الكل', async () => {
                 try {
-                    localStorage.removeItem('mg_local_chapters_data_' + manhwaId);
                     localStorage.removeItem('mg_downloaded_chapters_' + manhwaId);
+                    await deleteAllImagesForManhwa(manhwaId);
+                    
                     const keys = [];
                     for (let i = 0; i < localStorage.length; i++) {
                         const k = localStorage.key(i);
