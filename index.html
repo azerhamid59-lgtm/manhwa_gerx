@@ -9,75 +9,30 @@
     <link rel="manifest" href="/manhwa_gerx/manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-
-        /* إخفاء شريط التمرير في متصفحات كروم وسفاري وسامسونج */
-::-webkit-scrollbar {
-    display: none;
-    width: 0px;
-    background: transparent;
-}
-
-/* إخفاء شريط التمرير في متصفحات فايرفوكس وإنترنت إكسبلورر */
-html {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-/* إخفاء الشريط تحديداً عن عناصر الجسم وبعض حاويات العرض */
-body {
-    overflow-x: hidden;
-}
-
+        ::-webkit-scrollbar { display: none; width: 0px; background: transparent; }
+        html { scrollbar-width: none; -ms-overflow-style: none; }
+        body { overflow-x: hidden; }
 
         html, body { background-color: #0c0c0e; }
         :root {
-            --bg-main: #0c0c0e; --bg-card: #15151a; --bg-header: #0c0c0e; /* تعديل 1: توحيد اللون */
+            --bg-main: #0c0c0e; --bg-card: #15151a; --bg-header: #0c0c0e;
             --accent: #e50914; --accent-glow: rgba(229, 9, 20, 0.35);
             --text-primary: #ffffff; --text-secondary: #9a9ab0;
             --border: #22222d; --radius: 12px; --danger-bright: #ff003c;
         }
         
-        * { 
-            margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-            -webkit-touch-callout: none !important;
-            -webkit-user-select: none !important;
-            -khtml-user-select: none !important;
-            -moz-user-select: none !important;
-            -ms-user-select: none !important;
-            user-select: none !important;
-        }
-        
-        input, textarea {
-            -webkit-touch-callout: default !important;
-            -webkit-user-select: text !important;
-            user-select: text !important;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none !important; }
+        input, textarea { user-select: text !important; }
         button, a, input, textarea, select, div, span { outline: none !important; }
-        button:focus, button:focus-visible, a:focus, input:focus { outline: none !important; box-shadow: none !important; }
         body { background-color: var(--bg-main); color: var(--text-primary); padding-bottom: 75px; direction: rtl; overflow-x: hidden; scroll-behavior: smooth; }
 
-        .pull-to-refresh-indicator {
-            position: fixed; top: 0; left: 50%; transform: translate(-50%, -60px);
-            width: 44px; height: 44px; border-radius: 50%;
-            background: var(--bg-card); border: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 2000; opacity: 0; pointer-events: none;
-            transition: opacity 0.2s, transform 0.15s ease-out;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
+        .pull-to-refresh-indicator { position: fixed; top: 0; left: 50%; transform: translate(-50%, -60px); width: 44px; height: 44px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.15s ease-out; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .pull-to-refresh-indicator.visible { opacity: 1; }
-        .ptr-spinner {
-            width: 24px; height: 24px;
-            border: 3px solid rgba(229,9,20,0.15);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-        }
+        .ptr-spinner { width: 24px; height: 24px; border: 3px solid rgba(229,9,20,0.15); border-top-color: var(--accent); border-radius: 50%; }
         .ptr-spinner.spinning { animation: ptrSpin 0.7s linear infinite; }
         @keyframes ptrSpin { to { transform: rotate(360deg); } }
 
-        .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: var(--bg-header); position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(12px); } /* تعديل 2: إزالة الحد السفلي */
+        .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: var(--bg-header); position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(12px); }
         .header-right { display: flex; align-items: center; gap: 12px; }
         .header-left-tools { display: flex; align-items: center; gap: 14px; }
         .logo-image-style { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.5px; cursor: pointer; }
@@ -91,19 +46,7 @@ body {
         
         .section-title { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 10px; color: #fff; margin-bottom: 18px; }
         .section-title i { color: var(--accent); font-size: 1.15rem; }
-
-        .empty-state-text {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 50vh;
-            width: 100%;
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            text-align: center;
-            padding: 20px;
-            margin: 0 auto;
-        }
+        .empty-state-text { display: flex; justify-content: center; align-items: center; min-height: 50vh; width: 100%; color: var(--text-secondary); font-size: 0.95rem; text-align: center; padding: 20px; margin: 0 auto; }
 
         .manhwa-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .manhwa-card { background-color: var(--bg-card); border-radius: var(--radius); overflow: hidden; cursor: pointer; border: 1px solid var(--border); display: flex; flex-direction: column; transition: transform 0.2s, border-color 0.2s; height: 100%; }
@@ -147,7 +90,7 @@ body {
         .btn-apply { flex: 1; background: var(--accent); color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.85rem; }
         .btn-reset { flex: 1; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.85rem; }
 
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--bg-main); display: flex; justify-content: space-around; align-items: center; padding: 8px 0; z-index: 1000; backdrop-filter: blur(12px); } /* تعديل 3: إزالة الحد العلوي وتوحيد اللون */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--bg-main); display: flex; justify-content: space-around; align-items: center; padding: 8px 0; z-index: 1000; backdrop-filter: blur(12px); }
         .nav-item { color: var(--text-secondary); text-decoration: none; display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; font-weight: 600; cursor: pointer; transition: color 0.2s; flex: 1; }
         .nav-item i { font-size: 1.1rem; margin-bottom: 2px; }
         .nav-item.active { color: var(--accent); }
@@ -167,7 +110,6 @@ body {
         .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); z-index: 6000; display: none; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
         .auth-page-full { width: 100%; max-width: 400px; margin: auto; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 16px; }
         
-        /* --- التصميم الجديد لصفحات المصادقة --- */
         .auth-container-new { width: 100%; max-width: 400px; margin: auto; display: flex; flex-direction: column; padding: 20px; text-align: right; background: var(--bg-main); min-height: 100vh; }
         .auth-logo-new { text-align: center; margin-bottom: 20px; }
         .auth-logo-new img { width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
@@ -201,18 +143,8 @@ body {
         .strength-bar-new { flex: 1; height: 4px; background: #22222d; border-radius: 2px; }
         .strength-bar-new.active { background: var(--accent); }
 
-        .guest-gate-overlay, .notification-confirm-modal-overlay, .download-confirm-overlay,
-        .title-modal-overlay, .rating-modal-overlay, .rules-modal-overlay, .options-modal-overlay, .report-modal-overlay, .download-progress-overlay, .request-modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.82); backdrop-filter: blur(6px);
-            z-index: 9000; display: none; align-items: center; justify-content: center; padding: 20px;
-        }
-        .guest-gate-box, .notification-confirm-modal-box, .download-confirm-box,
-        .title-modal-box, .rating-modal-box, .options-modal-box, .request-modal-box {
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px;
-            width: 100%; max-width: 380px; padding: 24px; text-align: center;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.7);
-        }
+        .guest-gate-overlay, .notification-confirm-modal-overlay, .download-confirm-overlay, .title-modal-overlay, .rating-modal-overlay, .rules-modal-overlay, .options-modal-overlay, .report-modal-overlay, .download-progress-overlay, .request-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.82); backdrop-filter: blur(6px); z-index: 9000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .guest-gate-box, .notification-confirm-modal-box, .download-confirm-box, .title-modal-box, .rating-modal-box, .options-modal-box, .request-modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; width: 100%; max-width: 380px; padding: 24px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.7); }
         .guest-gate-box h3, .notification-confirm-modal-box h3, .download-confirm-box h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; color: #fff; }
         .guest-gate-box p, .notification-confirm-modal-box p, .download-confirm-box p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px; }
         .guest-gate-actions, .notification-confirm-actions, .download-confirm-actions, .title-modal-actions { display: flex; gap: 10px; }
@@ -383,7 +315,6 @@ body {
         .pdf-page-img.loaded { opacity: 1; }
         .pdf-reader-scroll-box.horizontal-mode .pdf-page-img { flex: 0 0 100vw; height: 100vh; object-fit: contain; scroll-snap-align: center; }
         
-        /* تعديل: جعل الشريط العلوي في القارئ شفافاً */
         .pdf-hud-top { position: fixed; top: 0; left: 0; width: 100vw; background: rgba(18,18,22,0.4) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05) !important; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; z-index: 5500; transition: transform 0.25s ease; }
         .pdf-hud-top.hidden { transform: translateY(-100%); }
         
@@ -450,14 +381,7 @@ body {
         .toast.success { border-color: #2ecc71; } .toast.error { border-color: var(--danger-bright); } .toast.info { border-color: var(--accent); }
         .toast.success i { color: #2ecc71; } .toast.error i { color: var(--danger-bright); } .toast.info i { color: var(--accent); }
 
-        .exit-toast {
-            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-            background: rgba(21,21,26,0.95); border: 1px solid var(--border);
-            color: #fff; padding: 10px 20px; border-radius: 20px;
-            font-size: 0.85rem; font-weight: 700; z-index: 9999;
-            opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
-            white-space: nowrap; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
+        .exit-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(21,21,26,0.95); border: 1px solid var(--border); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; z-index: 9999; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .exit-toast.show { opacity: 1; }
 
         .download-progress-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 340px; padding: 24px; text-align: center; }
@@ -1640,7 +1564,6 @@ body {
             }
         }
 
-        // دالة مساعدة لتحديث قوة كلمة المرور
         function updatePasswordStrength(val) {
             const bars = [document.getElementById('strengthBar1'), document.getElementById('strengthBar2'), document.getElementById('strengthBar3')];
             bars.forEach(b => { if(b) b.classList.remove('active'); });
@@ -1704,17 +1627,14 @@ body {
             finally { btn.innerHTML = `إنشاء الحساب`; btn.disabled = false; }
         }
 
-        // --- التعديلات الخاصة بمكتبة @capgo/capacitor-social-login ---
         async function handleGoogleOAuth() {
             if (!db) return;
             try {
-                // التحقق من توفر الإضافة في بيئة Capacitor
                 if (!window.Capacitor || !window.Capacitor.Plugins.SocialLogin) {
                     showToast("تسجيل الدخول بجوجل غير مدعوم في المتصفح.", "error");
                     return;
                 }
 
-                // استدعاء دالة تسجيل الدخول من المكتبة الجديدة
                 const res = await window.Capacitor.Plugins.SocialLogin.login({
                     provider: 'google',
                     options: {
@@ -1722,14 +1642,12 @@ body {
                     }
                 });
 
-                // استخراج الـ ID Token من النتيجة
                 const idToken = res.result.idToken;
 
                 if (!idToken) {
                     throw new Error("لم يتم استلام ID Token من جوجل.");
                 }
 
-                // إرسال الـ Token إلى Supabase
                 const { data, error } = await db.auth.signInWithIdToken({
                     provider: 'google',
                     token: idToken,
@@ -1743,7 +1661,6 @@ body {
 
             } catch (err) {
                 console.error("Google Auth Error:", err);
-                // هذا السطر الجديد سيطبع الخطأ الحقيقي باللون الأحمر
                 showToast("الخطأ: " + (err.message || JSON.stringify(err)), "error", 10000); 
             }
         }
@@ -2570,11 +2487,9 @@ body {
                 if (data && data.length > 0) {
                     let addedAny = false;
                     data.forEach((notif) => {
-                        // Strip emojis
                         const cleanTitle = notif.title.replace(/[✅❌]/g, '').trim();
                         const cleanMsg = notif.message.replace(/[✅❌]/g, '').trim();
                         
-                        // Deduplication check
                         const exists = appNotifications.some(n => n.desc === cleanMsg && n.title === cleanTitle);
                         if (!exists) {
                             appNotifications.unshift({
@@ -3454,20 +3369,23 @@ body {
         // --- دوال التخزين المحلي الجديدة باستخدام Capacitor Filesystem ---
 
         async function saveImagesToFilesystem(manhwaId, chNum, urls) {
-            if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) return false;
-            const { Filesystem, Directory } = window.Capacitor.Plugins;
+            if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) {
+                showToast("مكتبة التخزين غير متوفرة.", "error");
+                return false;
+            }
+            const { Filesystem } = window.Capacitor.Plugins;
             const path = `manhwa_${manhwaId}/chapter_${chNum}`;
 
             try {
-                // استخدام Directory.External بدلاً من Directory.Data
+                // استخدام 'DATA' بدلاً من Directory.External لتجنب الخطأ
                 try { 
                     await Filesystem.mkdir({ 
                         path, 
-                        directory: Directory.External, 
+                        directory: 'DATA', 
                         recursive: true 
                     }); 
                 } catch(e) {
-                    // تجاهل خطأ إذا كان المجلد موجوداً بالفعل
+                    // تجاهل الخطأ إذا كان المجلد موجوداً بالفعل
                 }
 
                 for (let i = 0; i < urls.length; i++) {
@@ -3484,29 +3402,27 @@ body {
                     await Filesystem.writeFile({
                         path: `${path}/page_${i}.jpg`,
                         data: base64,
-                        directory: Directory.External,
-                        encoding: 'base64' // إضافة مهمة جداً لحفظ الصور بشكل صحيح
+                        directory: 'DATA', // استخدام 'DATA' هنا أيضاً
+                        encoding: 'base64'
                     });
                 }
                 return true;
             } catch (error) {
                 console.error("Error saving images to filesystem:", error);
-                if (typeof showToast === 'function') {
-                    showToast("تفاصيل الخطأ: " + (error.message || error), "error", 5000);
-                }
+                showToast("تفاصيل الخطأ: " + (error.message || error), "error", 5000);
                 return false;
             }
         }
 
         async function getImagesFromFilesystem(manhwaId, chNum) {
             if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) return null;
-            const { Filesystem, Directory } = window.Capacitor.Plugins;
+            const { Filesystem } = window.Capacitor.Plugins;
             const path = `manhwa_${manhwaId}/chapter_${chNum}`;
 
             try {
                 const result = await Filesystem.readdir({ 
                     path, 
-                    directory: Directory.External 
+                    directory: 'DATA' 
                 });
                 
                 const files = result.files
@@ -3523,19 +3439,19 @@ body {
 
         async function deleteImagesFromFilesystem(manhwaId, chNum) {
             if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) return;
-            const { Filesystem, Directory } = window.Capacitor.Plugins;
+            const { Filesystem } = window.Capacitor.Plugins;
             const path = `manhwa_${manhwaId}/chapter_${chNum}`;
             try {
-                await Filesystem.rmdir({ path, directory: Directory.External, recursive: true });
+                await Filesystem.rmdir({ path, directory: 'DATA', recursive: true });
             } catch (e) {}
         }
 
         async function deleteAllImagesForManhwa(manhwaId) {
             if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) return;
-            const { Filesystem, Directory } = window.Capacitor.Plugins;
+            const { Filesystem } = window.Capacitor.Plugins;
             const path = `manhwa_${manhwaId}`;
             try {
-                await Filesystem.rmdir({ path, directory: Directory.External, recursive: true });
+                await Filesystem.rmdir({ path, directory: 'DATA', recursive: true });
             } catch (e) {}
         }
 
@@ -3826,7 +3742,6 @@ body {
             document.getElementById('appHeaderElement').style.display = 'none';
             document.getElementById('bottomNav').style.display = 'none';
             
-            // --- التحكم في الأشرطة بناءً على حالة الزر ---
             if (readerSettings.fullscreen) {
                 if (window.Capacitor && window.Capacitor.Plugins.EdgeToEdge) {
                     window.Capacitor.Plugins.EdgeToEdge.enable({
@@ -3839,7 +3754,6 @@ body {
             } else {
                 setSystemBarsVisibility(true);
             }
-            // ---------------------------------------------
 
             const positionKey = `mg_reader_pos_${manhwaId}_${chapterNum}`;
             const savedPos = parseInt(localStorage.getItem(positionKey) || '0', 10);
@@ -3869,7 +3783,6 @@ body {
             
             setSystemBarsVisibility(true);
             
-            // --- الإضافة الجديدة لإعادة الأشرطة سوداء خارج القارئ ---
             if (window.Capacitor && window.Capacitor.Plugins.EdgeToEdge) {
                 window.Capacitor.Plugins.EdgeToEdge.enable({
                     backgroundColor: "#0c0c0e",
@@ -3877,7 +3790,6 @@ body {
                     statusBarColor: "#0c0c0e"
                 });
             }
-            // --------------------------------------------------------
 
             document.getElementById('readerView').classList.remove('active');
             document.getElementById('appHeaderElement').style.display = 'flex';
@@ -3983,13 +3895,13 @@ body {
             if (cb.checked) {
                 if (rv.requestFullscreen) rv.requestFullscreen().catch(e => {});
                 else if (rv.webkitRequestFullscreen) rv.webkitRequestFullscreen();
-                setSystemBarsVisibility(false); // إخفاء الأشرطة
+                setSystemBarsVisibility(false);
                 if (window.Capacitor && window.Capacitor.Plugins.EdgeToEdge) {
                     window.Capacitor.Plugins.EdgeToEdge.enable({ backgroundColor: "transparent", navigationBarColor: "#00000000", statusBarColor: "#00000000" });
                 }
             } else {
                 if (document.exitFullscreen && document.fullscreenElement) document.exitFullscreen().catch(e => {});
-                setSystemBarsVisibility(true); // إظهار الأشرطة
+                setSystemBarsVisibility(true);
                 if (window.Capacitor && window.Capacitor.Plugins.EdgeToEdge) {
                     window.Capacitor.Plugins.EdgeToEdge.enable({ backgroundColor: "#0c0c0e", navigationBarColor: "#0c0c0e", statusBarColor: "#0c0c0e" });
                 }
@@ -3997,7 +3909,6 @@ body {
             saveReaderSettings();
         }
 
-        // دالة مساعدة للتحكم في الأشرطة
         function setSystemBarsVisibility(visible) {
             if (window.Capacitor) {
                 if (window.Capacitor.Plugins.StatusBar) {
@@ -4082,7 +3993,6 @@ body {
                         topHud.classList.add('hidden'); counter.style.display = 'none';
                         progress.style.display = 'none'; settings.style.display = 'none';
                         
-                        // إخفاء الأشرطة الأصلية فقط إذا كان وضع ملء الشاشة مفعلاً
                         if (readerSettings.fullscreen) {
                             if (window.Capacitor) {
                                 if (window.Capacitor.Plugins.StatusBar) window.Capacitor.Plugins.StatusBar.hide();
@@ -4254,15 +4164,12 @@ body {
                 initPullToRefresh();
                 navigateTo('home');
 
-                // --- تهيئة إضافة SocialLogin ---
                 if (window.Capacitor && window.Capacitor.Plugins.SocialLogin) {
                     try {
                         await window.Capacitor.Plugins.SocialLogin.initialize({
                             google: {
-    // تأكد من وضع Web Client ID الخاص بك هنا
-    webClientId: '901201695721-4kokplipcf00epts55u37vjskumr5fv.apps.googleusercontent.com',
-    // أضف هذا السطر الجديد:
-    skipAuthOnlyAuthorizationAfterSignIn: true
+                                webClientId: '901201695721-4kokplipcf00epts55u37vjskumr5fv.apps.googleusercontent.com',
+                                skipAuthOnlyAuthorizationAfterSignIn: true
                             }
                         });
                         console.log("SocialLogin initialized successfully");
@@ -4270,7 +4177,6 @@ body {
                         console.error("SocialLogin initialization error:", initErr);
                     }
                 }
-                // -------------------------------------
 
                 try { await initAuthSystem(); } catch(e) { console.error("Auth init failed", e); }
                 
@@ -4572,7 +4478,6 @@ body {
         });
     </script>
     <script>
-  // فرض اللون الأسود على أشرطة النظام الأصلية (Native System Bars)
   if (window.Capacitor && window.Capacitor.Plugins.EdgeToEdge) {
     window.Capacitor.Plugins.EdgeToEdge.enable({
       backgroundColor: "#0c0c0e",
@@ -4584,7 +4489,6 @@ body {
 
     <script>
   document.addEventListener('DOMContentLoaded', function() {
-      // 1. إجبار المتصفح على إخفاء شريط التمرير
       const style = document.createElement('style');
       style.innerHTML = `
           ::-webkit-scrollbar { display: none !important; width: 0px !important; height: 0px !important; background: transparent !important; }
@@ -4593,7 +4497,6 @@ body {
       `;
       document.head.appendChild(style);
       
-      // 2. إلغاء تفعيل الكاش (Service Worker) مؤقتاً
       if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(function(registrations) {
               for(let registration of registrations) {
@@ -4605,7 +4508,6 @@ body {
     </script>
 
     <script>
-        // إجبار الأشرطة على الاختفاء كل 3 ثوانٍ إذا كنا في القارئ ووضع ملء الشاشة مفعل
         let forceHideInterval = null;
         
         function startForceHide() {
@@ -4617,10 +4519,9 @@ body {
                         if (window.Capacitor.Plugins.NavigationBar) window.Capacitor.Plugins.NavigationBar.hide();
                     }
                 }
-            }, 3000); // كل 3 ثوانٍ
+            }, 3000);
         }
 
-        // تعديل دالة فتح القارئ لتشغيل المؤقت
         const origOpenPdfReader = window.openPdfReader;
         window.openPdfReader = function(...args) {
             origOpenPdfReader.apply(this, args);
@@ -4629,14 +4530,12 @@ body {
             }
         };
 
-        // تعديل دالة إغلاق القارئ لإيقاف المؤقت
         const origClosePdfReader = window.closePdfReader;
         window.closePdfReader = function(...args) {
             if (forceHideInterval) { clearInterval(forceHideInterval); forceHideInterval = null; }
             origClosePdfReader.apply(this, args);
         };
 
-        // تعديل دالة تفعيل/إلغاء ملء الشاشة
         const origToggleFullscreen = window.toggleFullscreenFeature;
         window.toggleFullscreenFeature = function(cb) {
             origToggleFullscreen(cb);
@@ -4649,7 +4548,6 @@ body {
     </script>
     
     <style>
-        /* إجبار الشريط العلوي للقارئ على العودة للون الأسود الصلب */
         .pdf-hud-top {
             background: rgba(18,18,22,0.92) !important;
             border-bottom: 1px solid var(--border) !important;
