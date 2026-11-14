@@ -3459,13 +3459,22 @@ body {
             const path = `manhwa_${manhwaId}/chapter_${chNum}`;
 
             try {
-                // إنشاء المجلد إذا لم يكن موجوداً
-                try { await Filesystem.mkdir({ path, directory: Directory.Data, recursive: true }); } catch(e) {}
+                // استخدام Directory.External بدلاً من Directory.Data
+                try { 
+                    await Filesystem.mkdir({ 
+                        path, 
+                        directory: Directory.External, 
+                        recursive: true 
+                    }); 
+                } catch(e) {
+                    // تجاهل خطأ إذا كان المجلد موجوداً بالفعل
+                }
 
                 for (let i = 0; i < urls.length; i++) {
                     const res = await fetch(urls[i]);
+                    if (!res.ok) throw new Error(`فشل تحميل الصورة ${i}`);
                     const blob = await res.blob();
-                    // تحويل الصورة إلى Base64
+                    
                     const base64 = await new Promise((resolve) => {
                         const reader = new FileReader();
                         reader.onloadend = () => resolve(reader.result.split(',')[1]);
@@ -3475,12 +3484,16 @@ body {
                     await Filesystem.writeFile({
                         path: `${path}/page_${i}.jpg`,
                         data: base64,
-                        directory: Directory.Data
+                        directory: Directory.External,
+                        encoding: 'base64' // إضافة مهمة جداً لحفظ الصور بشكل صحيح
                     });
                 }
                 return true;
             } catch (error) {
                 console.error("Error saving images to filesystem:", error);
+                if (typeof showToast === 'function') {
+                    showToast("تفاصيل الخطأ: " + (error.message || error), "error", 5000);
+                }
                 return false;
             }
         }
@@ -3491,18 +3504,19 @@ body {
             const path = `manhwa_${manhwaId}/chapter_${chNum}`;
 
             try {
-                const result = await Filesystem.readdir({ path, directory: Directory.Data });
-                // ترتيب الصور حسب الاسم
+                const result = await Filesystem.readdir({ 
+                    path, 
+                    directory: Directory.External 
+                });
+                
                 const files = result.files
                     .filter(f => f.name.endsWith('.jpg'))
                     .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
                 
                 if (files.length === 0) return null;
                 
-                // تحويل مسارات الملفات إلى مسارات يمكن للمتصفح قراءتها
                 return files.map(f => window.Capacitor.convertFileSrc(f.uri));
             } catch (error) {
-                // إذا لم يوجد المجلد، فهذا يعني أن الفصل غير محمل
                 return null; 
             }
         }
@@ -3512,7 +3526,7 @@ body {
             const { Filesystem, Directory } = window.Capacitor.Plugins;
             const path = `manhwa_${manhwaId}/chapter_${chNum}`;
             try {
-                await Filesystem.rmdir({ path, directory: Directory.Data, recursive: true });
+                await Filesystem.rmdir({ path, directory: Directory.External, recursive: true });
             } catch (e) {}
         }
 
@@ -3521,7 +3535,7 @@ body {
             const { Filesystem, Directory } = window.Capacitor.Plugins;
             const path = `manhwa_${manhwaId}`;
             try {
-                await Filesystem.rmdir({ path, directory: Directory.Data, recursive: true });
+                await Filesystem.rmdir({ path, directory: Directory.External, recursive: true });
             } catch (e) {}
         }
 
