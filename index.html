@@ -6,14 +6,18 @@
     <title>ManhwaGerx</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="manifest" href="/manhwa_gerx/manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         ::-webkit-scrollbar { display: none; width: 0px; background: transparent; }
         html { scrollbar-width: none; -ms-overflow-style: none; }
         body { overflow-x: hidden; }
 
-        html, body { background-color: #0c0c0e; }
+        html, body { background-color: #0c0c0e; overscroll-behavior-y: none; -webkit-touch-callout: none; }
+        body { padding-top: env(safe-area-inset-top, 0px); padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px)); }
+        .app-header { padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
+        .bottom-nav { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+        .pdf-hud-top { padding-top: calc(12px + env(safe-area-inset-top, 0px)) !important; background: rgba(18,18,22,0.92) !important; border-bottom: 1px solid var(--border) !important; }
+        .comments-bottom-bar { padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
         :root {
             --bg-main: #0c0c0e; --bg-card: #15151a; --bg-header: #0c0c0e;
             --accent: #e50914; --accent-glow: rgba(229, 9, 20, 0.35);
@@ -1246,21 +1250,110 @@
 
         let currentConfirmAction = null;
 
-        // --- إصلاح زر الرجوع باستخدام @capacitor/app ---
+        // --- دوال مساعدة للتكامل الأصلي (Native Helpers) ---
+        async function triggerNativeHaptic(style = 'LIGHT') {
+            try {
+                if (window.Capacitor && window.Capacitor.Plugins.Haptics) {
+                    await window.Capacitor.Plugins.Haptics.impact({ style });
+                }
+            } catch (e) {}
+        }
+
+        async function copyTextNative(text) {
+            try {
+                if (window.Capacitor && window.Capacitor.Plugins.Clipboard) {
+                    await window.Capacitor.Plugins.Clipboard.write({ string: text });
+                } else if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(text);
+                }
+                triggerNativeHaptic('LIGHT');
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function openExternalUrlNative(url) {
+            if (!url) return;
+            try {
+                if (window.Capacitor && window.Capacitor.Plugins.Browser) {
+                    await window.Capacitor.Plugins.Browser.open({ url });
+                } else {
+                    window.open(url, '_system');
+                }
+            } catch (e) {
+                window.location.href = url;
+            }
+        }
+
+        // --- إصلاح زر الرجوع الأصلي باستخدام @capacitor/app ---
+        let lastBackPressTime = 0;
         if (window.Capacitor && window.Capacitor.Plugins.App) {
             const { App } = window.Capacitor.Plugins;
-            App.addListener('backButton', ({ canGoBack }) => {
+            App.addListener('backButton', () => {
+                const readerChapters = document.getElementById('readerChaptersOverlay');
+                if (readerChapters && readerChapters.style.display === 'flex') { readerChapters.style.display = 'none'; return; }
+                const readerSettings = document.getElementById('readerSettingsPanel');
+                if (readerSettings && readerSettings.style.display === 'flex') { closeReaderSettingsPanel(); return; }
                 if (document.getElementById('readerView').classList.contains('active')) { closePdfReader(); return; }
+
+                const modalsToClose = [
+                    'authOverlay', 'guestGateOverlay', 'rulesModalOverlay',
+                    'optionsModalOverlay', 'reportModalOverlay', 'reportWorkModalOverlay',
+                    'ratingModalOverlay', 'titleModalOverlay', 'requestModalOverlay',
+                    'notificationConfirmModalOverlay', 'downloadConfirmOverlay'
+                ];
+                for (const mId of modalsToClose) {
+                    const el = document.getElementById(mId);
+                    if (el && el.style.display === 'flex') { el.style.display = 'none'; return; }
+                }
+
                 if (document.getElementById('confirmationBottomSheetModal').classList.contains('show')) { closeConfirmationSheet(); return; }
                 if (document.getElementById('addToLibraryModal').classList.contains('show')) { closeAddToLibraryModal(); return; }
-                if (document.getElementById('newRequestModal').classList.contains('show')) { document.getElementById('newRequestModal').classList.remove('show'); setTimeout(()=>document.getElementById('newRequestModal').style.display='none',300); return; }
-                if (document.getElementById('offlineOverlay').style.display === 'flex') { return; }
+                if (document.getElementById('newRequestModal').classList.contains('show')) {
+                    document.getElementById('newRequestModal').classList.remove('show');
+                    setTimeout(() => document.getElementById('newRequestModal').style.display = 'none', 300);
+                    return;
+                }
                 if (document.getElementById('sideDrawer').classList.contains('open')) { toggleDrawer(true); return; }
                 if (document.getElementById('advancedSearchModal').style.display === 'flex') { closeAdvancedSearch(); return; }
-                
+                if (document.getElementById('offlineOverlay').style.display === 'flex') {
+                    document.getElementById('offlineOverlay').style.display = 'none';
+                    return;
+                }
+
                 const activeView = document.querySelector('.view.active');
-                if (activeView && activeView.id !== 'homeView') { navigateTo('home'); return; }
-                App.exitApp();
+                if (activeView) {
+                    if (activeView.id === 'commentsPageView') {
+                        document.getElementById('commentsPageBackBtn')?.click();
+                        return;
+                    }
+                    if (activeView.id === 'detailsView') {
+                        navigateTo(previousSearchQueryLocation || 'home');
+                        return;
+                    }
+                    if (['privacyView', 'termsView', 'faqView', 'aboutView'].includes(activeView.id)) {
+                        goBackFromLegal();
+                        return;
+                    }
+                    if (activeView.id !== 'homeView') {
+                        navigateTo('home');
+                        return;
+                    }
+                }
+
+                const now = Date.now();
+                if (now - lastBackPressTime < 2000) {
+                    App.exitApp();
+                } else {
+                    lastBackPressTime = now;
+                    triggerNativeHaptic('LIGHT');
+                    const exitToast = document.getElementById('exitToast');
+                    if (exitToast) {
+                        exitToast.classList.add('show');
+                        setTimeout(() => exitToast.classList.remove('show'), 2000);
+                    }
+                }
             });
         }
 
@@ -1587,7 +1680,8 @@
             if (!submitBtn) return;
             const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal);
             const isPassValid = passVal.length >= 6;
-            document.getElementById('emailErrorMsg').style.display = (emailVal.length > 0 && !isEmailValid) ? 'flex' : 'none';
+            const errEl = document.getElementById('emailErrorMsg');
+            if (errEl) errEl.style.display = (emailVal.length > 0 && !isEmailValid) ? 'flex' : 'none';
             submitBtn.classList.toggle('btn-submit-active', isEmailValid && isPassValid);
             submitBtn.classList.toggle('btn-submit-disabled', !(isEmailValid && isPassValid));
             submitBtn.disabled = !(isEmailValid && isPassValid);
@@ -2279,10 +2373,10 @@
                     const iconHtml = getSocialIconHtml(link.platform);
                     const title = link.title || link.platform;
                     html += `
-                        <a href="${escapeHtml(link.url)}" target="_blank" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; text-decoration: none; color: #fff; font-size: 0.85rem; font-weight: 700; transition: 0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                        <div onclick="openExternalUrlNative('${escapeHtml(link.url)}')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; color: #fff; font-size: 0.85rem; font-weight: 700;">
                             <span style="display: flex; align-items: center; gap: 10px;">${iconHtml}${escapeHtml(title)}</span>
                             <i class="fa-solid fa-arrow-left" style="color: var(--text-secondary); font-size: 0.8rem;"></i>
-                        </a>
+                        </div>
                     `;
                 });
                 html += `</div></div>`;
@@ -3123,7 +3217,7 @@
         function closeOptionsModal() { document.getElementById('optionsModalOverlay').style.display = 'none'; }
 
         function copyCommentText(text) {
-            navigator.clipboard.writeText(text).then(() => { closeOptionsModal(); }).catch(() => {});
+            copyTextNative(text).then(() => { closeOptionsModal(); });
         }
 
         function startEditingComment(commentId) {
@@ -3930,20 +4024,17 @@
         }
         function toggleFullscreenFeature(cb) {
             readerSettings.fullscreen = cb.checked;
-            const rv = document.getElementById('readerView');
-            
             if (cb.checked) {
-                if (rv.requestFullscreen) rv.requestFullscreen().catch(e => {});
-                else if (rv.webkitRequestFullscreen) rv.webkitRequestFullscreen();
                 setSystemBarsVisibility(false);
                 if (window.Capacitor && window.Capacitor.Plugins.EdgeToEdge) {
-                    window.Capacitor.Plugins.EdgeToEdge.enable({ backgroundColor: "transparent", navigationBarColor: "#00000000", statusBarColor: "#00000000" });
+                    window.Capacitor.Plugins.EdgeToEdge.enable({ backgroundColor: "transparent", navigationBarColor: "#00000000", statusBarColor: "#00000000" }).catch(() => {});
                 }
+                startForceHide();
             } else {
-                if (document.exitFullscreen && document.fullscreenElement) document.exitFullscreen().catch(e => {});
+                if (forceHideInterval) { clearInterval(forceHideInterval); forceHideInterval = null; }
                 setSystemBarsVisibility(true);
                 if (window.Capacitor && window.Capacitor.Plugins.EdgeToEdge) {
-                    window.Capacitor.Plugins.EdgeToEdge.enable({ backgroundColor: "#0c0c0e", navigationBarColor: "#0c0c0e", statusBarColor: "#0c0c0e" });
+                    window.Capacitor.Plugins.EdgeToEdge.enable({ backgroundColor: "#0c0c0e", navigationBarColor: "#0c0c0e", statusBarColor: "#0c0c0e" }).catch(() => {});
                 }
             }
             saveReaderSettings();
@@ -4150,6 +4241,7 @@
             const offlineOverlay = document.getElementById('offlineOverlay');
             
             if (isOnline) {
+                if (!isAppOffline) return;
                 isAppOffline = false;
                 offlineOverlay.style.display = 'none';
                 banner.style.background = '#2ecc71';
@@ -4163,34 +4255,33 @@
                     banner.style.transform = 'translateY(-100%)';
                     setTimeout(() => { banner.style.display = 'none'; }, 300);
                 }, 3000);
+                fetchManhwaFromDB(true).then(() => {
+                    if (document.getElementById('homeView').classList.contains('active')) renderActiveMainGrid();
+                });
             } else {
+                if (isAppOffline) return;
                 isAppOffline = true;
                 banner.style.display = 'none';
                 offlineOverlay.style.display = 'flex';
             }
         }
 
-        async function checkNetworkStatus() {
-            try {
-                await fetch('https://www.google.com/generate_204', { mode: 'no-cors', cache: 'no-store' });
-                if (isAppOffline) {
-                    showNetworkBanner(true);
-                }
-            } catch (error) {
-                if (!isAppOffline) {
-                    showNetworkBanner(false);
-                }
+        async function initNativeNetworkListener() {
+            if (window.Capacitor && window.Capacitor.Plugins.Network) {
+                const { Network } = window.Capacitor.Plugins;
+                try {
+                    const status = await Network.getStatus();
+                    if (!status.connected) showNetworkBanner(false);
+                    Network.addListener('networkStatusChange', (status) => {
+                        showNetworkBanner(status.connected);
+                    });
+                    return;
+                } catch (e) {}
             }
+            if (!navigator.onLine) showNetworkBanner(false);
+            window.addEventListener('online', () => showNetworkBanner(true));
+            window.addEventListener('offline', () => showNetworkBanner(false));
         }
-
-        setInterval(checkNetworkStatus, 5000);
-        window.addEventListener('online', () => {
-            checkNetworkStatus();
-            fetchManhwaFromDB(true).then(() => {
-                if (document.getElementById('homeView').classList.contains('active')) renderActiveMainGrid();
-            });
-        });
-        window.addEventListener('offline', () => { isAppOffline = true; showNetworkBanner(false); });
 
         setInterval(async () => {
             if (currentUser) {
@@ -4204,7 +4295,7 @@
                 updateViewToggleIcon();
                 renderCategoriesFilterUI();
                 initPullToRefresh();
-                checkNetworkStatus();
+                initNativeNetworkListener();
                 navigateTo('home');
 
                 if (window.Capacitor && window.Capacitor.Plugins.SocialLogin) {
@@ -4393,7 +4484,7 @@
                 document.getElementById('closeTitleModalBtn')?.addEventListener('click', () => { document.getElementById('titleModalOverlay').style.display = 'none'; });
                 document.getElementById('copyFullTitleBtn')?.addEventListener('click', () => {
                     const t = document.getElementById('fullTitleModalText').innerText;
-                    navigator.clipboard.writeText(t).then(() => { document.getElementById('titleModalOverlay').style.display = 'none'; }).catch(() => showToast("تعذر النسخ.", "error"));
+                    copyTextNative(t).then((ok) => { if (ok) document.getElementById('titleModalOverlay').style.display = 'none'; else showToast("تعذر النسخ.", "error"); });
                 });
 
                 document.getElementById('commentsPageBackBtn')?.addEventListener('click', () => {
