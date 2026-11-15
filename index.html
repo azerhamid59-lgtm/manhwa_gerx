@@ -26,6 +26,19 @@
         button, a, input, textarea, select, div, span { outline: none !important; }
         body { background-color: var(--bg-main); color: var(--text-primary); padding-bottom: 75px; direction: rtl; overflow-x: hidden; scroll-behavior: smooth; }
 
+        /* --- واجهة عدم الاتصال بالإنترنت --- */
+        #offlineOverlay {
+            position: fixed; inset: 0; background: var(--bg-main); z-index: 100000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 24px;
+        }
+        #offlineOverlay i { font-size: 5rem; color: var(--accent); margin-bottom: 20px; animation: pulseWifi 2s infinite; }
+        @keyframes pulseWifi { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+        #offlineOverlay h2 { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 10px; }
+        #offlineOverlay p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 30px; max-width: 300px; }
+        .offline-btn { background: var(--accent); color: #fff; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .offline-btn:active { transform: scale(0.96); }
+
         .pull-to-refresh-indicator { position: fixed; top: 0; left: 50%; transform: translate(-50%, -60px); width: 44px; height: 44px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.15s ease-out; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .pull-to-refresh-indicator.visible { opacity: 1; }
         .ptr-spinner { width: 24px; height: 24px; border: 3px solid rgba(229,9,20,0.15); border-top-color: var(--accent); border-radius: 50%; }
@@ -474,6 +487,16 @@
     </style>
 </head>
 <body>
+
+    <!-- واجهة عدم الاتصال -->
+    <div id="offlineOverlay">
+        <i class="fa-solid fa-wifi"></i>
+        <h2>لا يوجد اتصال بالإنترنت</h2>
+        <p>أنت غير متصل حالياً. يمكنك الانتقال إلى قسم التنزيلات لقراءة الفصول التي قمت بتحميلها مسبقاً.</p>
+        <button class="offline-btn" onclick="navigateTo('downloads'); document.getElementById('offlineOverlay').style.display='none';">
+            <i class="fa-solid fa-download"></i> الذهاب إلى التنزيلات
+        </button>
+    </div>
 
     <div id="maintenanceOverlay" style="display: none; position: fixed; inset: 0; background: var(--bg-main); z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
         <i class="fa-solid fa-screwdriver-wrench" style="font-size: 4rem; color: var(--accent); margin-bottom: 20px;"></i>
@@ -1223,38 +1246,26 @@
 
         let currentConfirmAction = null;
 
-        // Hardware Back Button Logic
-        let backButtonPressed = false;
-        history.pushState(null, null, location.href);
-        window.onpopstate = function () {
-            history.go(1); // Prevent actual back navigation
-
-            const activeView = document.querySelector('.view.active');
-            if (activeView && activeView.id !== 'homeView' && activeView.id !== 'readerView') {
-                navigateTo('home');
-                return;
-            }
-
-            if (activeView && activeView.id === 'readerView') {
-                closePdfReader();
-                return;
-            }
-
-            if (activeView && activeView.id === 'homeView') {
-                if (backButtonPressed) {
-                    if (navigator.app && navigator.app.exitApp) navigator.app.exitApp();
-                    else window.close();
-                } else {
-                    backButtonPressed = true;
-                    const toast = document.getElementById('exitToast');
-                    toast.classList.add('show');
-                    setTimeout(() => { 
-                        backButtonPressed = false; 
-                        toast.classList.remove('show');
-                    }, 2000);
-                }
-            }
-        };
+        // --- إصلاح زر الرجوع باستخدام @capacitor/app ---
+        if (window.Capacitor && window.Capacitor.Plugins.App) {
+            const { App } = window.Capacitor.Plugins;
+            App.addListener('backButton', ({ canGoBack }) => {
+                // 1. إغلاق القارئ
+                if (document.getElementById('readerView').classList.contains('active')) { closePdfReader(); return; }
+                // 2. إغلاق النوافذ المنبثقة
+                if (document.getElementById('confirmationBottomSheetModal').classList.contains('show')) { closeConfirmationSheet(); return; }
+                if (document.getElementById('addToLibraryModal').classList.contains('show')) { closeAddToLibraryModal(); return; }
+                if (document.getElementById('newRequestModal').classList.contains('show')) { document.getElementById('newRequestModal').classList.remove('show'); setTimeout(()=>document.getElementById('newRequestModal').style.display='none',300); return; }
+                if (document.getElementById('offlineOverlay').style.display === 'flex') { /* لا تفعل شيئاً، المستخدم يجب أن يتنقل */ return; }
+                if (document.getElementById('sideDrawer').classList.contains('open')) { toggleDrawer(true); return; }
+                if (document.getElementById('advancedSearchModal').style.display === 'flex') { closeAdvancedSearch(); return; }
+                // 3. العودة للرئيسية
+                const activeView = document.querySelector('.view.active');
+                if (activeView && activeView.id !== 'homeView') { navigateTo('home'); return; }
+                // 4. الخروج من التطبيق
+                App.exitApp();
+            });
+        }
 
         function showConfirmationSheet(title, desc, btnText, action) {
             document.getElementById('confirmSheetTitle').innerText = title;
@@ -2827,7 +2838,7 @@
                 if (key.startsWith('mg_downloaded_chapters_')) {
                     const manhwaId = key.replace('mg_downloaded_chapters_', '');
                     const dlMap = JSON.parse(localStorage.getItem(key));
-                    const manhwa = currentManhwaList.find(m => m.id === manhwaId);
+                    const manhwa = currentManhwaList.find(m => m.id === manhwaId) || JSON.parse(localStorage.getItem('mg_manhwa_meta_' + manhwaId));
                     if (manhwa && Object.keys(dlMap).length > 0) {
                         const count = Object.keys(dlMap).filter(k => dlMap[k] === true).length;
                         if (count > 0) {
@@ -2882,18 +2893,26 @@
             });
         }
 
+        let isHandlingNotifClick = false;
         async function handleNotificationClick(notifId, manhwaId, chNum) {
+            if (isHandlingNotifClick) return;
+            isHandlingNotifClick = true;
+            setTimeout(() => { isHandlingNotifClick = false; }, 1000); // منع النقر المزدوج
+
             const notif = appNotifications.find(n => n.id == notifId);
             if (notif) { notif.unread = false; localStorage.setItem('mg_notifications', JSON.stringify(appNotifications)); renderNotificationsList(); }
-            if (!manhwaId || manhwaId === 'undefined' || manhwaId === 'null') return;
+            if (!manhwaId || manhwaId === 'undefined' || manhwaId === 'null') { isHandlingNotifClick = false; return; }
+            
             await fetchManhwaFromDB();
-            const manhwa = currentManhwaList.find(m => m.id === manhwaId);
-            if (!manhwa) { showToast("العمل لم يعد متاحاً.", "error"); return; }
+            const manhwa = currentManhwaList.find(m => m.id === manhwaId) || JSON.parse(localStorage.getItem('mg_manhwa_meta_' + manhwaId));
+            if (!manhwa) { showToast("العمل لم يعد متاحاً.", "error"); isHandlingNotifClick = false; return; }
+            
             if (chNum !== null && !isNaN(chNum)) {
                 const chapter = (manhwa.chapters || []).find(c => c.num == chNum);
                 if (chapter) openChapterFromList(manhwa.id, chNum);
                 else { showToast(`الفصل ${formatChapterNum(chNum)} غير متوفر.`, "info"); openDetails(manhwaId); }
             } else openDetails(manhwaId);
+            isHandlingNotifClick = false;
         }
         function markAllNotificationsRead() {
             appNotifications.forEach(n => n.unread = false);
@@ -2914,7 +2933,7 @@
         }
 
         function updateCommentsPageTitle(manhwaId, chNum = null) {
-            const manhwa = currentManhwaList.find(m => m.id === manhwaId);
+            const manhwa = currentManhwaList.find(m => m.id === manhwaId) || JSON.parse(localStorage.getItem('mg_manhwa_meta_' + manhwaId));
             if (!manhwa) return;
             document.getElementById('commentsPageTitleSpan').innerText = manhwa.title || 'التعليقات';
             document.getElementById('commentsPageSubtitleSpan').innerText = chNum !== null ? `تعليقات الفصل ${formatChapterNum(chNum)}` : 'تعليقات العمل';
@@ -3227,11 +3246,14 @@
         }
 
         async function openDetails(id) {
-            const item = await fetchSingleManhwa(id);
-            if (!item) { showToast("تعذر تحميل بيانات العمل.", "error"); return; }
+            let item = await fetchSingleManhwa(id);
+            if (!item) {
+                item = JSON.parse(localStorage.getItem('mg_manhwa_meta_' + id));
+            }
+            if (!item) { showToast("تعذر تحميل بيانات العمل. تأكد من اتصالك بالإنترنت.", "error"); return; }
             
             currentOpenManhwaId = id; 
-            await incrementViewCount(id);
+            if (navigator.onLine) await incrementViewCount(id);
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById('detailsView').classList.add('active');
             document.getElementById('appHeaderElement').style.display = 'none';
@@ -3377,16 +3399,13 @@
             const path = `manhwa_${manhwaId}/chapter_${chNum}`;
 
             try {
-                // استخدام 'DATA' بدلاً من Directory.External لتجنب الخطأ
                 try { 
                     await Filesystem.mkdir({ 
                         path, 
                         directory: 'DATA', 
                         recursive: true 
                     }); 
-                } catch(e) {
-                    // تجاهل الخطأ إذا كان المجلد موجوداً بالفعل
-                }
+                } catch(e) {}
 
                 for (let i = 0; i < urls.length; i++) {
                     const res = await fetch(urls[i]);
@@ -3402,7 +3421,7 @@
                     await Filesystem.writeFile({
                         path: `${path}/page_${i}.jpg`,
                         data: base64,
-                        directory: 'DATA', // استخدام 'DATA' هنا أيضاً
+                        directory: 'DATA',
                         encoding: 'base64'
                     });
                 }
@@ -3504,8 +3523,13 @@
         }
 
         async function openChapterFromList(manhwaId, chNum) {
-            const manhwa = currentManhwaList.find(m => m.id === manhwaId); if (!manhwa) return;
-            const chapter = (manhwa.chapters || []).find(c => Number(c.num) === Number(chNum)); if (!chapter) return;
+            let manhwa = currentManhwaList.find(m => m.id === manhwaId);
+            if (!manhwa) {
+                manhwa = JSON.parse(localStorage.getItem('mg_manhwa_meta_' + manhwaId));
+            }
+            if (!manhwa) { showToast("بيانات العمل غير متوفرة.", "error"); return; }
+            
+            const chapter = (manhwa.chapters || []).find(c => Number(c.num) === Number(chNum)) || { id: 'local', num: chNum }; 
             
             let pages = [];
             let isLocal = false;
@@ -3522,6 +3546,10 @@
             if (isLocal) {
                 openPdfReader(manhwa.id, manhwa.title, Number(chNum), pages, chapter.id);
             } else {
+                if (!navigator.onLine) {
+                    showToast("هذا الفصل غير محمل. يرجى الاتصال بالإنترنت.", "error");
+                    return;
+                }
                 const myGen = ++readerOpenGeneration;
                 showReaderLoadingState(manhwa.id, Number(chNum), manhwa.title);
                 
@@ -3603,6 +3631,7 @@
 
                 dlMap[chNum] = true;
                 localStorage.setItem('mg_downloaded_chapters_' + manhwaId, JSON.stringify(dlMap));
+                localStorage.setItem('mg_manhwa_meta_' + manhwaId, JSON.stringify(manhwa));
                 
                 if (btn) { btn.className = "chapter-action-icon-btn downloaded-ok"; btn.innerHTML = `<i class="fa-solid fa-circle-down"></i>`; btn.disabled = false; }
             } catch (err) {
@@ -3615,7 +3644,8 @@
             if (!checkGuestPermission('download')) return;
             const chaps = manhwaItem.chapters || [];
             let dlMap = JSON.parse(localStorage.getItem('mg_downloaded_chapters_' + manhwaItem.id)) || {};
-            
+            localStorage.setItem('mg_manhwa_meta_' + manhwaItem.id, JSON.stringify(manhwaItem));
+
             const toDownload = chaps.filter(ch => !dlMap[ch.num]);
             
             if (toDownload.length === 0) { showToast('جميع الفصول متوفرة.', 'info'); return; }
@@ -3698,7 +3728,7 @@
         function openPdfReader(manhwaId, title, chapterNum, pagesArray, chapterId) {
             pdfReaderState.manhwaId = manhwaId; pdfReaderState.chapterNum = chapterNum; pdfReaderState.pages = pagesArray;
             currentReaderChapterId = chapterId;
-            const manhwa = currentManhwaList.find(m => m.id === manhwaId);
+            const manhwa = currentManhwaList.find(m => m.id === manhwaId) || JSON.parse(localStorage.getItem('mg_manhwa_meta_' + manhwaId));
             addToHistory(manhwaId, title, manhwa ? manhwa.cover : '', chapterNum);
             markChapterAsRead(manhwaId, chapterNum);
             
@@ -4013,7 +4043,8 @@
             const overlay = document.getElementById('readerChaptersOverlay');
             const list = document.getElementById('readerChaptersPopupList');
             if (!overlay || !list) return;
-            const manhwa = currentManhwaList.find(m => m.id === pdfReaderState.manhwaId); if (!manhwa) return;
+            const manhwa = currentManhwaList.find(m => m.id === pdfReaderState.manhwaId) || JSON.parse(localStorage.getItem('mg_manhwa_meta_' + pdfReaderState.manhwaId));
+            if (!manhwa) return;
             
             let chaps = [...manhwa.chapters];
             chaps.sort((a, b) => {
@@ -4101,13 +4132,16 @@
             });
         }
 
-        let isAppOffline = false;
+        let isAppOffline = !navigator.onLine;
         function showNetworkBanner(isOnline) {
             const banner = document.getElementById('networkStatusBanner');
             const icon = document.getElementById('networkIcon');
             const text = document.getElementById('networkText');
+            const offlineOverlay = document.getElementById('offlineOverlay');
             
             if (isOnline) {
+                isAppOffline = false;
+                offlineOverlay.style.display = 'none';
                 banner.style.background = '#2ecc71';
                 banner.style.color = '#fff';
                 icon.className = 'fa-solid fa-wifi';
@@ -4120,13 +4154,9 @@
                     setTimeout(() => { banner.style.display = 'none'; }, 300);
                 }, 3000);
             } else {
-                banner.style.background = '#e74c3c';
-                banner.style.color = '#fff';
-                icon.className = 'fa-solid fa-wifi';
-                icon.style.color = '#fff';
-                text.innerText = 'لا يوجد اتصال بالإنترنت';
-                banner.style.display = 'block';
-                setTimeout(() => { banner.style.transform = 'translateY(0)'; }, 10);
+                isAppOffline = true;
+                banner.style.display = 'none';
+                offlineOverlay.style.display = 'flex';
             }
         }
 
@@ -4134,12 +4164,10 @@
             try {
                 await fetch('https://www.google.com/generate_204', { mode: 'no-cors', cache: 'no-store' });
                 if (isAppOffline) {
-                    isAppOffline = false;
                     showNetworkBanner(true);
                 }
             } catch (error) {
                 if (!isAppOffline) {
-                    isAppOffline = true;
                     showNetworkBanner(false);
                 }
             }
@@ -4148,7 +4176,6 @@
         setInterval(checkNetworkStatus, 5000);
         window.addEventListener('online', checkNetworkStatus);
         window.addEventListener('offline', () => { isAppOffline = true; showNetworkBanner(false); });
-        checkNetworkStatus();
 
         setInterval(async () => {
             if (currentUser) {
@@ -4162,6 +4189,7 @@
                 updateViewToggleIcon();
                 renderCategoriesFilterUI();
                 initPullToRefresh();
+                checkNetworkStatus(); // Check initial network state
                 navigateTo('home');
 
                 if (window.Capacitor && window.Capacitor.Plugins.SocialLogin) {
