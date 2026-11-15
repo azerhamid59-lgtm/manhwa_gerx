@@ -4,15 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ManhwaGerx</title>
-    
-    <!-- الخطوط والأيقونات -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- ملف التصميم الخاص بنا -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -79,6 +73,38 @@
     <div class="bottom-sheet-modal" id="addToLibraryModal"><div class="bottom-sheet-content"><div class="sheet-header"><h3>أضف إلى مكتبتي</h3><button class="header-action-icon" onclick="closeAddToLibraryModal()"><i class="fa-solid fa-xmark"></i></button></div><div id="libraryOptionsList"></div></div></div>
     
     <div class="bottom-sheet-modal" id="newRequestModal"><div class="bottom-sheet-content"><div class="sheet-header"><h3>إرسال طلب جديد</h3><button class="header-action-icon" onclick="document.getElementById('newRequestModal').classList.remove('show'); document.getElementById('newRequestModal').style.display='none';"><i class="fa-solid fa-xmark"></i></button></div><div style="margin-bottom:12px;"><label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; display:block;">نوع الطلب</label><select id="newReqType" style="width:100%; padding:12px; color:#fff; background:var(--bg-main); border:1px solid var(--border); border-radius:8px;" onchange="toggleRequestFields()"><option value="add_work">إضافة عمل جديد</option><option value="add_chapter">طلب / مشكلة في فصل</option><option value="bug_report">إبلاغ عن مشكلة تقنية</option><option value="suggestion">اقتراح أو فكرة</option></select></div><div style="margin-bottom:12px;"><label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; display:block;">عنوان الطلب</label><input type="text" id="newReqTitle" style="width:100%; padding:12px; color:#fff; background:var(--bg-main); border:1px solid var(--border); border-radius:8px;" placeholder="عنوان مختصر..."></div><div id="reqManhwaField" style="margin-bottom:12px; display:none;"><label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; display:block;">اسم العمل (إن وجد)</label><input type="text" id="newReqManhwa" style="width:100%; padding:12px; color:#fff; background:var(--bg-main); border:1px solid var(--border); border-radius:8px;" placeholder="اسم المانهوا/المانجا..."></div><div style="margin-bottom:12px;"><label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; display:block;">التفاصيل</label><textarea id="newReqDesc" style="width:100%; padding:12px; color:#fff; background:var(--bg-main); border:1px solid var(--border); border-radius:8px; height:100px; resize:vertical;" placeholder="اكتب تفاصيل طلبك هنا..."></textarea></div><button class="btn-apply" id="newReqSubmitBtn" onclick="submitNewRequest()" style="width:100%; padding:14px; border-radius:10px; font-size:1rem;">إرسال الطلب</button></div></div>
+
+    <!-- نافذة إعدادات التنزيل -->
+    <div class="bottom-sheet-modal" id="downloadSettingsModal">
+        <div class="bottom-sheet-content">
+            <div class="sheet-header">
+                <h3>إعدادات التنزيل</h3>
+                <button class="header-action-icon" onclick="closeDownloadSettings()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="settings-section" style="margin-bottom:15px;">
+                <label class="settings-label" style="display:block; font-size:0.8rem; color:var(--text-secondary); margin-bottom:8px;">طريقة التنزيل</label>
+                <div class="settings-options-row">
+                    <div class="settings-option-pill active" id="dlModeManual" onclick="setDownloadMode('manual')">يدوي</div>
+                    <div class="settings-option-pill" id="dlModeAuto" onclick="setDownloadMode('auto')">تلقائي</div>
+                </div>
+            </div>
+            <div class="settings-section" style="margin-bottom:15px;">
+                <label class="settings-label" style="display:block; font-size:0.8rem; color:var(--text-secondary); margin-bottom:8px;">الشبكة</label>
+                <div class="settings-options-row">
+                    <div class="settings-option-pill active" id="dlNetWifi" onclick="setDownloadNetwork('wifi')">Wi-Fi فقط</div>
+                    <div class="settings-option-pill" id="dlNetAll" onclick="setDownloadNetwork('all')">Wi-Fi وبيانات</div>
+                </div>
+            </div>
+            <div class="settings-section" style="margin-bottom:20px;">
+                <label class="settings-label" style="display:block; font-size:0.8rem; color:var(--text-secondary); margin-bottom:8px;">جودة الصور</label>
+                <div class="settings-options-row">
+                    <div class="settings-option-pill active" id="dlQualHigh" onclick="setDownloadQuality('high')">عالية</div>
+                    <div class="settings-option-pill" id="dlQualNormal" onclick="setDownloadQuality('normal')">عادية</div>
+                </div>
+            </div>
+            <button class="btn-reset" style="width:100%; color: #e74c3c; border-color: #e74c3c;" onclick="clearAllDownloads()"><i class="fa-solid fa-trash-can"></i> مسح جميع التنزيلات</button>
+        </div>
+    </div>
 
     <div class="bottom-sheet-modal" id="confirmationBottomSheetModal" onclick="closeConfirmationSheet()"><div class="bottom-sheet-content" style="text-align: center;" onclick="event.stopPropagation()"><div class="sheet-header" style="justify-content: center; border-bottom: none; margin-bottom: 8px;"><h3 id="confirmSheetTitle" style="color: #fff;">تأكيد</h3></div><p id="confirmSheetDesc" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6;"></p><div style="display: flex; gap: 10px;"><button class="btn-apply" id="confirmSheetBtnYes" style="background: var(--danger-bright);">حذف</button><button class="btn-reset" onclick="closeConfirmationSheet()">إلغاء</button></div></div></div>
 
@@ -203,7 +229,21 @@
         </div>
         
         <div id="historyView" class="view"><div class="notifications-top-bar"><div><button class="btn-back-arrow" onclick="navigateTo('home')"><i class="fa-solid fa-arrow-right"></i></button><h3 class="section-title" style="margin-bottom: 0;">سجل المشاهدة القديم</h3></div></div><div class="chapter-list" id="historyList"></div></div>
-        <div id="downloadsView" class="view"><div class="notifications-top-bar"><div><button class="btn-back-arrow" onclick="navigateTo('home')"><i class="fa-solid fa-arrow-right"></i></button><h3 class="section-title" style="margin-bottom: 0;">التنزيلات</h3></div></div><div id="downloadsList"></div></div>
+        
+        <div id="downloadsView" class="view">
+            <div class="notifications-top-bar">
+                <div><button class="btn-back-arrow" onclick="navigateTo('home')"><i class="fa-solid fa-arrow-right"></i></button><h3 class="section-title" style="margin-bottom: 0;">التنزيلات</h3></div>
+                <button class="notif-icon-only-btn" onclick="openDownloadSettings()" title="الإعدادات"><i class="fa-solid fa-gear"></i></button>
+            </div>
+            <div class="stats-cards-row" id="downloadStatsRow" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-mini-card" style="padding:8px;"><i class="fa-solid fa-book-open" style="font-size:1rem; margin-bottom:2px;"></i><span class="val" id="dStatWorks" style="font-size:1rem;">0</span><span class="lbl" style="font-size:0.6rem;">الأعمال</span></div>
+                <div class="stat-mini-card" style="padding:8px;"><i class="fa-solid fa-file-lines" style="font-size:1rem; margin-bottom:2px;"></i><span class="val" id="dStatChapters" style="font-size:1rem;">0</span><span class="lbl" style="font-size:0.6rem;">الفصول</span></div>
+                <div class="stat-mini-card" style="padding:8px;"><i class="fa-solid fa-download" style="font-size:1rem; margin-bottom:2px;"></i><span class="val" id="dStatQueue" style="font-size:1rem;">0</span><span class="lbl" style="font-size:0.6rem;">قيد التنزيل</span></div>
+            </div>
+            <div id="downloadsListContainer">
+                <p class="empty-state-text">لا توجد تنزيلات حالياً.</p>
+            </div>
+        </div>
 
         <div id="notificationsView" class="view">
             <div class="notifications-top-bar"><div><button class="btn-back-arrow" onclick="navigateTo('home')"><i class="fa-solid fa-arrow-right"></i></button><h3 class="section-title" style="margin-bottom: 0;">الإشعارات</h3></div><div class="notifications-actions-row"><button class="notif-action-btn" id="markAllReadBtn"><i class="fa-solid fa-check-double"></i> قراءة الكل</button><button class="notif-icon-only-btn" id="clearOldNotifsBtn"><i class="fa-solid fa-trash-can"></i></button></div></div>
@@ -214,7 +254,7 @@
             <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 16px; text-align:center;">
                 <div class="drawer-avatar" style="width:70px; height:70px; font-size:2rem; margin:0 auto 12px auto;"><i class="fa-solid fa-user"></i></div>
                 <h3 id="profileUsernameText" style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">زائر</h3>
-                <p id="profileEmailText" style="color:var(--text-secondary); font-size:0.8rem; margin-bottom:20px;">  انت غير مسجل، عليك تسجيل الدخول لمزامنة اعداداتك </p>
+                <p id="profileEmailText" style="color:var(--text-secondary); font-size:0.8rem; margin-bottom:20px;">غير مسجل الدخول</p>
                 <div style="display:flex; flex-direction:column; gap:10px; max-width:280px; margin:0 auto;">
                     <button class="auth-btn btn-email-trigger" id="profileLoginTriggerBtn">تسجيل الدخول / إنشاء حساب</button>
                     <button class="auth-btn btn-guest" id="profileLogoutBtn" style="color:#e74c3c; display:none; background:transparent;">تسجيل الخروج</button>
@@ -299,7 +339,6 @@
 
     <button id="backToTopBtn" onclick="scrollToTop()"><i class="fa-solid fa-arrow-up"></i></button>
     
-    <!-- ملف الجافاسكريبت الخاص بنا -->
     <script src="app.js"></script>
 </body>
 </html>
