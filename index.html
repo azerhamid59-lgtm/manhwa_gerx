@@ -32,11 +32,11 @@
             display: none; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; padding: 24px;
         }
-        #offlineOverlay i { font-size: 5rem; color: var(--accent); margin-bottom: 20px; animation: pulseWifi 2s infinite; }
+        #offlineOverlay i { font-size: 4rem; color: var(--accent); margin-bottom: 20px; animation: pulseWifi 2s infinite; }
         @keyframes pulseWifi { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
-        #offlineOverlay h2 { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 10px; }
+        #offlineOverlay h2 { font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 10px; }
         #offlineOverlay p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 30px; max-width: 300px; }
-        .offline-btn { background: var(--accent); color: #fff; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .offline-btn { background: var(--accent); color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; width: auto; min-width: 200px; }
         .offline-btn:active { transform: scale(0.96); }
 
         .pull-to-refresh-indicator { position: fixed; top: 0; left: 50%; transform: translate(-50%, -60px); width: 44px; height: 44px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.15s ease-out; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
@@ -125,14 +125,14 @@
         
         .auth-container-new { width: 100%; max-width: 400px; margin: auto; display: flex; flex-direction: column; padding: 20px; text-align: right; background: var(--bg-main); min-height: 100vh; }
         .auth-logo-new { text-align: center; margin-bottom: 20px; }
-        .auth-logo-new img { width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .auth-logo-new img { width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); background: #1a1a22; padding: 10px; }
         .auth-title-new { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 8px; text-align: center; }
         .auth-subtitle-new { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 30px; text-align: center; }
         .auth-input-group-new { margin-bottom: 16px; }
         .auth-label-new { display: block; font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
         .auth-input-wrapper-new { position: relative; display: flex; align-items: center; background: #15151a; border: 1px solid #22222d; border-radius: 12px; padding: 0 14px; transition: border-color 0.2s; }
-        .auth-input-wrapper-new:focus-within { border-color: var(--accent); }
-        .auth-input-wrapper-new input { flex: 1; background: none; border: none; color: #fff; font-size: 0.9rem; padding: 14px 0; outline: none; text-align: right; }
+        .auth-input-wrapper-new:focus-within { border-color: var(--text-secondary); }
+        .auth-input-wrapper-new input { flex: 1; background: none; border: none; color: #fff; font-size: 0.9rem; padding: 14px 0; outline: none; text-align: right; user-select: text !important; }
         .auth-input-wrapper-new .input-icon { color: var(--text-secondary); font-size: 1rem; margin-left: 10px; }
         .auth-input-wrapper-new .eye-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0; margin-right: 10px; }
         .auth-row-new { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 0.8rem; }
@@ -305,7 +305,7 @@
         .comments-bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-header); border-top: 1px solid var(--border); padding: 10px 16px; display: flex; flex-direction: column; gap: 6px; z-index: 2500; backdrop-filter: blur(12px); }
         .replying-indicator-row { display: none; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--accent); background: rgba(255,42,95,0.08); padding: 6px 10px; border-radius: 8px; }
         .comments-inputs-row { display: flex; align-items: center; gap: 8px; width: 100%; }
-        .comments-input-field { flex: 1; min-width: 0; background: var(--bg-main); border: 1px solid var(--border); border-radius: 20px; padding: 9px 14px; color: #fff; font-size: 0.88rem; resize: none; max-height: 100px; }
+        .comments-input-field { flex: 1; min-width: 0; background: var(--bg-main) !important; border: 1px solid var(--border) !important; border-radius: 20px; padding: 9px 14px; color: #fff !important; font-size: 0.88rem; resize: none; max-height: 100px; }
         .comments-action-icon-btn { background: none; border: none; color: var(--text-secondary); font-size: 1.15rem; cursor: pointer; padding: 4px; }
         .comments-send-icon-btn { background: var(--accent); color: #fff; border: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.9rem; flex-shrink: 0; }
 
@@ -409,7 +409,7 @@
 
         .request-modal-box { max-width: 420px; text-align: right; }
         .request-modal-box h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; color: #fff; text-align: center; }
-        .request-modal-box input, .request-modal-box textarea, .request-modal-box select { width: 100%; padding: 10px; margin-bottom: 12px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 0.85rem; font-family: inherit; }
+        .request-modal-box input, .request-modal-box textarea, .request-modal-box select { width: 100%; padding: 10px; margin-bottom: 12px; background: var(--bg-main) !important; border: 1px solid var(--border) !important; border-radius: 8px; color: #fff !important; font-size: 0.85rem; font-family: inherit; }
         .request-modal-box textarea { height: 80px; resize: vertical; }
 
         .lib-tabs-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px; scrollbar-width: none; }
@@ -440,7 +440,7 @@
         .sb-rejected { background: rgba(231,76,60,0.15); color: #e74c3c; }
         .sb-completed { background: rgba(155,89,182,0.15); color: #9b59b6; }
 
-        .bottom-sheet-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 5000; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px); }
+        .bottom-sheet-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px); }
         .bottom-sheet-content { background: var(--bg-card); width: 100%; max-width: 500px; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; max-height: 90vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s ease; }
         .bottom-sheet-modal.show .bottom-sheet-content { transform: translateY(0); }
         .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
@@ -647,7 +647,7 @@
             </div>
             <div style="margin-bottom:12px;">
                 <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; display:block;">نوع الطلب</label>
-                <select id="newReqType" class="auth-input-field-wrapper" style="width:100%; padding:10px; color:#fff; background:var(--bg-main); border:1px solid var(--border);" onchange="toggleRequestFields()">
+                <select id="newReqType" style="width:100%; padding:12px; color:#fff; background:var(--bg-main); border:1px solid var(--border); border-radius:8px;" onchange="toggleRequestFields()">
                     <option value="add_work">إضافة عمل جديد</option>
                     <option value="add_chapter">طلب / مشكلة في فصل</option>
                     <option value="bug_report">إبلاغ عن مشكلة تقنية</option>
@@ -656,17 +656,17 @@
             </div>
             <div style="margin-bottom:12px;">
                 <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; display:block;">عنوان الطلب</label>
-                <input type="text" id="newReqTitle" class="auth-input-field-wrapper" style="width:100%; padding:10px; color:#fff;" placeholder="عنوان مختصر...">
+                <input type="text" id="newReqTitle" style="width:100%; padding:12px; color:#fff; background:var(--bg-main); border:1px solid var(--border); border-radius:8px;" placeholder="عنوان مختصر...">
             </div>
             <div id="reqManhwaField" style="margin-bottom:12px; display:none;">
                 <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; display:block;">اسم العمل (إن وجد)</label>
-                <input type="text" id="newReqManhwa" class="auth-input-field-wrapper" style="width:100%; padding:10px; color:#fff;" placeholder="اسم المانهوا/المانجا...">
+                <input type="text" id="newReqManhwa" style="width:100%; padding:12px; color:#fff; background:var(--bg-main); border:1px solid var(--border); border-radius:8px;" placeholder="اسم المانهوا/المانجا...">
             </div>
             <div style="margin-bottom:12px;">
                 <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:4px; display:block;">التفاصيل</label>
-                <textarea id="newReqDesc" class="auth-input-field-wrapper" style="width:100%; padding:10px; color:#fff; height:80px; resize:vertical;" placeholder="اكتب تفاصيل طلبك هنا..."></textarea>
+                <textarea id="newReqDesc" style="width:100%; padding:12px; color:#fff; background:var(--bg-main); border:1px solid var(--border); border-radius:8px; height:100px; resize:vertical;" placeholder="اكتب تفاصيل طلبك هنا..."></textarea>
             </div>
-            <button class="btn-apply" id="newReqSubmitBtn" onclick="submitNewRequest()" style="width:100%; padding:12px; border-radius:10px;">إرسال الطلب</button>
+            <button class="btn-apply" id="newReqSubmitBtn" onclick="submitNewRequest()" style="width:100%; padding:14px; border-radius:10px; font-size:1rem;">إرسال الطلب</button>
         </div>
     </div>
 
@@ -1250,19 +1250,16 @@
         if (window.Capacitor && window.Capacitor.Plugins.App) {
             const { App } = window.Capacitor.Plugins;
             App.addListener('backButton', ({ canGoBack }) => {
-                // 1. إغلاق القارئ
                 if (document.getElementById('readerView').classList.contains('active')) { closePdfReader(); return; }
-                // 2. إغلاق النوافذ المنبثقة
                 if (document.getElementById('confirmationBottomSheetModal').classList.contains('show')) { closeConfirmationSheet(); return; }
                 if (document.getElementById('addToLibraryModal').classList.contains('show')) { closeAddToLibraryModal(); return; }
                 if (document.getElementById('newRequestModal').classList.contains('show')) { document.getElementById('newRequestModal').classList.remove('show'); setTimeout(()=>document.getElementById('newRequestModal').style.display='none',300); return; }
-                if (document.getElementById('offlineOverlay').style.display === 'flex') { /* لا تفعل شيئاً، المستخدم يجب أن يتنقل */ return; }
+                if (document.getElementById('offlineOverlay').style.display === 'flex') { return; }
                 if (document.getElementById('sideDrawer').classList.contains('open')) { toggleDrawer(true); return; }
                 if (document.getElementById('advancedSearchModal').style.display === 'flex') { closeAdvancedSearch(); return; }
-                // 3. العودة للرئيسية
+                
                 const activeView = document.querySelector('.view.active');
                 if (activeView && activeView.id !== 'homeView') { navigateTo('home'); return; }
-                // 4. الخروج من التطبيق
                 App.exitApp();
             });
         }
@@ -2897,7 +2894,7 @@
         async function handleNotificationClick(notifId, manhwaId, chNum) {
             if (isHandlingNotifClick) return;
             isHandlingNotifClick = true;
-            setTimeout(() => { isHandlingNotifClick = false; }, 1000); // منع النقر المزدوج
+            setTimeout(() => { isHandlingNotifClick = false; }, 1000); 
 
             const notif = appNotifications.find(n => n.id == notifId);
             if (notif) { notif.unread = false; localStorage.setItem('mg_notifications', JSON.stringify(appNotifications)); renderNotificationsList(); }
@@ -3376,14 +3373,22 @@
 
         function renderContinueReadingWidget(manhwaItem) {
             const container = document.getElementById('continueReadingContainer'); if (!container) return;
-            const readData = getReadChapters()[manhwaItem.id] || [];
             const chaps = manhwaItem.chapters || [];
+            if (chaps.length === 0) { container.style.display = 'none'; return; }
+            const readData = getReadChapters()[manhwaItem.id] || [];
             const lastReadMap = JSON.parse(localStorage.getItem('mg_last_read')) || {};
             const lastReadNum = lastReadMap[manhwaItem.id];
+            
             let targetCh = null;
-            if (lastReadNum !== undefined) targetCh = chaps.find(c => Number(c.num) === Number(lastReadNum));
-            if (!targetCh && chaps.length > 0) targetCh = chaps.reduce((min, c) => (parseFloat(c.num) || 0) < (parseFloat(min.num) || 0) ? c : min, chaps[0]);
-            if (!targetCh || readData.length >= chaps.length) { container.style.display = 'none'; return; }
+            if (lastReadNum !== undefined) {
+                targetCh = chaps.find(c => Number(c.num) === Number(lastReadNum));
+            }
+            if (!targetCh) {
+                const sortedChaps = [...chaps].sort((a,b) => parseFloat(a.num) - parseFloat(b.num));
+                targetCh = sortedChaps.find(c => !readData.includes(parseFloat(c.num))) || sortedChaps[0];
+            }
+            
+            if (!targetCh) { container.style.display = 'none'; return; }
             container.style.display = 'block';
             container.innerHTML = `<div class="continue-reading-card" onclick="openChapterFromList('${manhwaItem.id}', ${targetCh.num})"><div class="continue-info"><h4>مواصلة القراءة</h4><p>الفصل ${formatChapterNum(targetCh.num)}</p></div><div class="continue-icon-wrap"><i class="fa-solid fa-play"></i></div></div>`;
         }
@@ -3450,7 +3455,12 @@
                 
                 if (files.length === 0) return null;
                 
-                return files.map(f => window.Capacitor.convertFileSrc(f.uri));
+                const urls = [];
+                for (const f of files) {
+                    const fileUri = await Filesystem.getUri({ path: `${path}/${f.name}`, directory: 'DATA' });
+                    urls.push(window.Capacitor.convertFileSrc(fileUri.uri));
+                }
+                return urls;
             } catch (error) {
                 return null; 
             }
@@ -4174,7 +4184,12 @@
         }
 
         setInterval(checkNetworkStatus, 5000);
-        window.addEventListener('online', checkNetworkStatus);
+        window.addEventListener('online', () => {
+            checkNetworkStatus();
+            fetchManhwaFromDB(true).then(() => {
+                if (document.getElementById('homeView').classList.contains('active')) renderActiveMainGrid();
+            });
+        });
         window.addEventListener('offline', () => { isAppOffline = true; showNetworkBanner(false); });
 
         setInterval(async () => {
@@ -4189,7 +4204,7 @@
                 updateViewToggleIcon();
                 renderCategoriesFilterUI();
                 initPullToRefresh();
-                checkNetworkStatus(); // Check initial network state
+                checkNetworkStatus();
                 navigateTo('home');
 
                 if (window.Capacitor && window.Capacitor.Plugins.SocialLogin) {
@@ -4354,27 +4369,25 @@
 
                 document.getElementById('deleteRatingBtn')?.addEventListener('click', async () => {
                     if (!currentOpenManhwaId) return;
-                    showConfirmationSheet('حذف التقييم', 'هل أنت متأكد من حذف تقييمك لهذا العمل؟', 'حذف', async () => {
-                        const btn = document.getElementById('deleteRatingBtn');
-                        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`; 
-                        btn.disabled = true;
+                    const btn = document.getElementById('deleteRatingBtn');
+                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`; 
+                    btn.disabled = true;
+                    
+                    try {
+                        const { error } = await db.rpc('delete_rating', { p_manhwa_id: currentOpenManhwaId });
+                        if (error) throw error;
                         
-                        try {
-                            const { error } = await db.rpc('delete_rating', { p_manhwa_id: currentOpenManhwaId });
-                            if (error) throw error;
-                            
-                            await fetchManhwaFromDB(true);
-                            const item = currentManhwaList.find(m => m.id === currentOpenManhwaId);
-                            if (item) updateDetailsRatingUI(item);
-                            
-                            document.getElementById('ratingModalOverlay').style.display = 'none';
-                        } catch (err) {
-                            showToast("تعذر حذف التقييم.", "error");
-                        } finally {
-                            btn.innerHTML = `حذف التقييم`;
-                            btn.disabled = false;
-                        }
-                    });
+                        await fetchManhwaFromDB(true);
+                        const item = currentManhwaList.find(m => m.id === currentOpenManhwaId);
+                        if (item) updateDetailsRatingUI(item);
+                        
+                        document.getElementById('ratingModalOverlay').style.display = 'none';
+                    } catch (err) {
+                        showToast("تعذر حذف التقييم.", "error");
+                    } finally {
+                        btn.innerHTML = `حذف التقييم`;
+                        btn.disabled = false;
+                    }
                 });
 
                 document.getElementById('closeTitleModalBtn')?.addEventListener('click', () => { document.getElementById('titleModalOverlay').style.display = 'none'; });
